@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from core.models import Recipe, Ingredient
+from .models import Recipe, Ingredient
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -14,11 +14,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 
-def add_ingredients(recipe, ingredients):
-    for ingredient in ingredients:
-        Ingredient.objects.create(recipe=recipe, **ingredient)
-
-
 class RecipeSerializer(serializers.ModelSerializer):
     """
     Serializer for recipes
@@ -27,36 +22,30 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = (
-            'id', 'name', 'description', 'ingredients'
-        )
+        fields = ('id', 'name', 'description', 'ingredients',)
         read_only_fields = ('id',)
 
     def create(self, validated_data):
-        recipe = Recipe(
-            name=validated_data.get('name'),
-            description=validated_data.get('description')
-        )
-        recipe.save()
         ingredients = validated_data.get('ingredients')
-        add_ingredients(recipe, ingredients)
+        del validated_data['ingredients']
+        recipe = Recipe.objects.create_recipe(recipe_data=validated_data,
+                                              ingredients=ingredients)
 
         return recipe
 
     def update(self, instance, validated_data):
-
         new_name = validated_data.get('name')
         if new_name:
             instance.name = new_name
+
         new_description = validated_data.get('description')
         if new_description:
             instance.description = new_description
 
         ingredients = validated_data.get('ingredients')
         if ingredients:
-            ingredients_delete = Ingredient.objects.filter(recipe=instance)
-            ingredients_delete.delete()
-            add_ingredients(instance, ingredients)
+            instance.delete_ingredients()
+            instance.add_ingredients(ingredients)
 
         instance.save()
 

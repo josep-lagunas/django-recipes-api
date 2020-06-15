@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 
-from core.models import Recipe
-from recipe.serializers import RecipeSerializer
+from .models import Recipe
+from .serializers import RecipeSerializer
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

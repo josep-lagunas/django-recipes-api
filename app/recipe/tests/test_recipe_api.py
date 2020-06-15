@@ -5,9 +5,9 @@ from django.urls import reverse
 
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Recipe, Ingredient
+from ..models import Recipe, Ingredient
 
-from recipe.serializers import RecipeSerializer
+from ..serializers import RecipeSerializer
 
 RECIPES_URL = reverse('recipe:recipe-list')
 
@@ -17,16 +17,13 @@ def create_recipe(ingredients_count=5):
     Creates a dummy recipe for testing
     """
     payload = build_random_recipe_payload(ingredients_count)
+    ingredients = payload['ingredients']
+    del payload['ingredients']
 
-    defaults = {
-        'name': payload['name'],
-        'description': payload['description'],
-    }
-
-    recipe = Recipe.objects.create(**defaults)
-
-    for ingredient in payload['ingredients']:
-        Ingredient.objects.create(recipe=recipe, **ingredient)
+    recipe = Recipe.objects.create_recipe(
+        recipe_data=payload,
+        ingredients=ingredients
+    )
 
     return recipe
 
@@ -37,7 +34,8 @@ def build_random_recipe_payload(ingredients_count=5):
                'ingredients': []}
     for i in range(ingredients_count):
         payload['ingredients'].append(
-            {'name': f'Random ingredient {str(uuid.uuid4())}'})
+            {'name': f'Random ingredient {str(uuid.uuid4())}'}
+        )
 
     return payload
 
